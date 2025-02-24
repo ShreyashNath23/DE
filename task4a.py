@@ -7,10 +7,9 @@ from pyspark.sql import SparkSession
 from pyspark.sql.functions import current_timestamp, col, when, count
 from pyspark.sql.types import StringType
 
-# For encryption: import Fernet from cryptography.fernet
 from cryptography.fernet import Fernet
 
-# Initialize Spark Session
+
 spark = SparkSession.builder.appName('Encrpted_Data').getOrCreate()
 
 jdbc_url = "jdbc:postgresql://localhost:5432/claimmgmt"
@@ -32,12 +31,10 @@ else:
 
 default_time = "1970-01-01 00:00:00"
 
-# Set up encryption key and cipher
-# (In production, do NOT generate a new key each time; load it securely.)
+
 key = Fernet.generate_key()
 cipher_suite = Fernet(key)
 
-# Define UDFs for masking and encryption
 def mask_pii(value):
     if value is None:
         return None
@@ -46,7 +43,6 @@ def mask_pii(value):
 def encrypt_value(value):
     if value is None:
         return None
-    # Encrypt the value and decode it back to string
     encrypted_value = cipher_suite.encrypt(value.encode('utf-8')).decode('utf-8')
     return encrypted_value
 
@@ -69,22 +65,18 @@ for table in tables:
         print(f"No new data for table `{table}`")
         continue
 
-    # Aggregate the claim data by ply_name
     dataFrame = dataFrame.groupBy("ply_name").agg(
         count(when(col("claim_status") == "pending", True)).alias("open_claims"),
         count(when(col("claim_status") == "closed", True)).alias("closed_claims")
     )
 
-    # Apply masking and encryption to ply_name
     dataFrame = dataFrame.withColumn("ply_name_masked", mask_udf(col("ply_name"))) \
         .withColumn("ply_name_encrypted", encrypt_udf(col("ply_name")))
 
-    # Write the resulting data to the output directory directly
     parquet_path = output_dir
     dataFrame.write.mode("append").parquet(parquet_path)
     print(f"Data written to Parquet format at: {parquet_path}")
 
-    # For updating extraction timestamp, we use the current timestamp (or compute max(dateinserted) if available)
     new_max_ts_row = dataFrame.select(current_timestamp().alias("max_ts")).collect()
     new_max_ts = new_max_ts_row[0]["max_ts"] if new_max_ts_row else None
 

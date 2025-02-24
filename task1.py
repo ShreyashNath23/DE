@@ -40,7 +40,7 @@ for table in tables:
         continue  
 
     print(f"New/Updated records for '{table}':")
-    df.show()
+    # df.show()
 
     new_max_ts_row = df.select(spark_max("dateinserted").alias("max_ts")).collect()
     new_max_ts = new_max_ts_row[0]["max_ts"] if new_max_ts_row else None

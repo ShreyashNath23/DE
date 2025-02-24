@@ -1,1 +1,1 @@
-claim_status
+/mnt/f/Lumiq_Bootcamp/DE/last_extraction.jso

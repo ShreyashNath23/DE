@@ -12,24 +12,24 @@ def run_quality_checks(dataFrame):
 
     imp_col = ['ply_name','ply_dsc','ply_id','dateinserted']
     
-    #Important col check
+    
     for col_name in imp_col:
         missing_count = dataFrame.filter(col(col_name).isNull()).count()
         results[f"Missing {col_name}"] = missing_count
     
-    #Unique ply_name check
+    
     ply_name_cnt = dataFrame.groupBy("ply_name").count().filter('count > 1').count()
     results['Duplicate ply_name'] = ply_name_cnt
 
-    #range check
+    
     ply_dsc_exist = dataFrame.filter(col("ply_dsc").isNotNull()).count()
     results["amount check"] = ply_dsc_exist
 
-    #date check
+    
     date = dataFrame.filter(col('dateinserted') > current_date()).count
     results['future date'] = date
 
-    #Data type check
+    
     expected_schema = {
         "ply_id":"integer",
         "claim_id":"integer",
@@ -39,7 +39,7 @@ def run_quality_checks(dataFrame):
     }
 
     for field_name, expected_type in expected_schema.items():
-        # Get the actual data type in lower-case string form
+        
         actual_type = [field.dataType.simpleString() for field in dataFrame.schema.fields if field.name == field_name]
         if actual_type:
             actual_type = actual_type[0]
@@ -50,12 +50,10 @@ def run_quality_checks(dataFrame):
             
     return results
 
-# Run the data quality checks
+
 dq_results = run_quality_checks(dataFrame)
 
-# Report the results (you might want to log this or raise alerts in production)
 for check, result in dq_results.items():
     print(f"{check}: {result}")
 
-# Stop the Spark session when done
 spark.stop()

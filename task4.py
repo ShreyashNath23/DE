@@ -87,10 +87,6 @@ else:
 
 default_time = "1970-01-01 00:00:00"
 
-# parquet_path = os.path.join(output_dir, tables, "parquet")
-
-# print(parquet_path)
-
 for table in tables:
     last_update_time = extraction_config.get(table, default_time)
     print(f"\nProcessing table '{table}' with last updated timestamp: {last_update_time}")

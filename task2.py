@@ -7,17 +7,17 @@ from pyspark.sql.functions import max as spark_max
 spark = SparkSession.builder.appName("IncrementalExtraction").getOrCreate()
 
 # JDBC connection properties for PostgreSQL
-jdbc_url = "jdbc:postgresql://localhost:5432/claimmgmt"  # Replace placeholders
+jdbc_url = "jdbc:postgresql://localhost:5432/claimmgmt"  
 connectionProperties = {
-    "user": "shreyash",       # Replace with your username
-    "password": "shreyash@10",   # Replace with your password
+    "user": "shreyash",       
+    "password": "shreyash@10",   
     "driver": "org.postgresql.Driver"
 }
 
-# Define tables and extraction configuration
+
 tables = ["policy", "policyholder", "claim"]
 config_file = "last_extraction.json"
-output_dir = "output_data"  # Directory to store the extracted data
+output_dir = "output_data"  
 
 if os.path.exists(config_file):
     with open(config_file, "r") as f:
@@ -43,19 +43,13 @@ for table in tables:
         print(f"No new data for table '{table}'. Skipping write operations.")
         continue
 
-    # Define output paths
+    
     parquet_path = os.path.join(output_dir, table, "parquet")
-    # avro_path = os.path.join(output_dir, table, "avro")
-
-    # Persist data in Parquet format
+    
+    
     df.write.mode("append").parquet(parquet_path)
     print(f"Data written to Parquet format at: {parquet_path}")
 
-    # Persist data in Avro format
-    # df.write.mode("append").format("avro").save(avro_path)
-    # print(f"Data written to Avro format at: {avro_path}")
-
-    # Update the last extraction timestamp
     new_max_ts_row = df.select(spark_max("dateinserted").alias("max_ts")).collect()
     new_max_ts = new_max_ts_row[0]["max_ts"] if new_max_ts_row else None
 
@@ -63,7 +57,6 @@ for table in tables:
         extraction_config[table] = new_max_ts
         print(f"Updated extraction timestamp for '{table}' to: {new_max_ts}")
 
-# Write updated extraction config
 with open(config_file, "w") as f:
     json.dump(extraction_config, f, default=str)
 
